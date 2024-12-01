@@ -19,10 +19,15 @@ def scrape_bing_images(query):
         soup = BeautifulSoup(response.content, "html.parser")
         image_elements = soup.find_all("img")
         image_urls = []
+        
         for img in image_elements:
             img_url = img.get("src")
-            if img_url and img_url.startswith("http") and not img_url.startswith("https://r.bing.com"):
-                image_urls.append(img_url)
+            # Check if the image URL is valid and does not contain preview patterns
+            if img_url and img_url.startswith("http") and "tse" not in img_url and "th" not in img_url:
+                # If there is a `data-src` attribute (full-resolution image), use it
+                full_res_url = img.get("data-src", img_url)
+                if full_res_url:
+                    image_urls.append(full_res_url)
         
         return image_urls
     else:
