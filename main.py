@@ -19,9 +19,14 @@ def scrape_bing_images(query):
         soup = BeautifulSoup(response.content, "html.parser")
         image_elements = soup.find_all("img")
         image_urls = []
+        
         for img in image_elements:
             img_url = img.get("src")
             if img_url and img_url.startswith("http") and not img_url.startswith("https://r.bing.com"):
+                # Check if the image URL is likely to be a blurred image
+                if "https://tse" in img_url:  # Filtering out blurred images based on the URL pattern
+                    continue  # Skip this image if it's likely blurred
+                
                 image_urls.append(img_url)
         
         return image_urls
