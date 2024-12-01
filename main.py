@@ -17,7 +17,7 @@ def scrape_bing_images(query):
     image_urls = []
     page = 1  # Track the page number
     
-    while len(image_urls) < 100:  # Continue scraping until we have 100 images
+    while len(image_urls) < 500:  # Continue scraping until we have 100 images
         response = requests.get(search_url + f"&first={page * 35}")  # Pagination logic, each page has 35 results
 
         if response.status_code == 200:
