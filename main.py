@@ -8,30 +8,36 @@ app = Flask(__name__)
 CORS(app)
 
 def scrape_bing_images(query):
-    search_url = f"https://www.bing.com/images/search?q={query}"
+    search_url = f"https://www.bing.com/images/search?q={query}&first=1"  # Start from the first result
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
-    response = requests.get(search_url, headers=headers)
 
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.content, "html.parser")
-        image_elements = soup.find_all("img")
-        image_urls = []
-        
-        for img in image_elements:
-            img_url = img.get("src")
-            # Check if the image URL is valid and does not contain preview patterns
-            if img_url and img_url.startswith("http") and "tse" not in img_url and "th" not in img_url:
-                # If there is a `data-src` attribute (full-resolution image), use it
-                full_res_url = img.get("data-src", img_url)
-                if full_res_url:
-                    image_urls.append(full_res_url)
-        
-        return image_urls
-    else:
-        return []
+    image_urls = []
+    page = 1  # Track the page number
+    
+    while len(image_urls) < 100:  # Continue scraping until we have 100 images
+        response = requests.get(search_url + f"&first={page * 35}")  # Pagination logic, each page has 35 results
+
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, "html.parser")
+            image_elements = soup.find_all("img")
+            
+            for img in image_elements:
+                img_url = img.get("src")
+                if img_url and img_url.startswith("http") and not img_url.startswith("https://r.bing.com"):
+                    image_urls.append(img_url)
+                    
+            page += 1  # Go to the next page
+        else:
+            break  # If we encounter an issue, stop trying
+    
+    # Reverse the order of images and limit to 100
+    image_urls = image_urls[:100]  # Ensure only 100 images are returned
+    image_urls.reverse()  # Reverse the order of the images
+
+    return image_urls
 
 @app.route('/scrape-images', methods=['GET'])
 def scrape_images():
